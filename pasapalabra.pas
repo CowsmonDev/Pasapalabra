@@ -15,7 +15,7 @@ program pasapalabras;
 				jugadorMayor : puntJugadores;
 			end;
 
-		type archJugador = file of typeJugador;
+		type archJugadores = file of typeJugador;
 
 	//Palabras:
 		type typePalabra = record
@@ -48,26 +48,28 @@ program pasapalabras;
 
 //Metodos Generales:
 
-	function isExists(var Jugador : archJugador; Direccion : String): boolean;
+	function isExists(var archJugador : archJugadores; Direccion : String): boolean;
 	begin
-		assign(Jugador,Direccion);
+		assign(archJugador,Direccion);
 		{$I-}
-			reset(Jugador);
+			reset(archJugador);
 		{$I+}
 		isExists := (IOResult = 0);
 	end;
 
-	procedure isExists(var Palabras: archPalabras; Direccion, aviso : String);
+	procedure isExists(var archPalabra: archPalabras; Direccion, aviso : String);
 	begin
-		assign(Palabras,Direccion);
+		assign(archPalabra,Direccion);
 		{$I-}
-			reset(Palabras);
+			reset(archPalabra);
 		{$I+}
 		if IOResult <> 0 then begin
 			writeln(aviso);
 			HALT;
 		end;
 	end;
+
+
 
 	function writeMenu(): String;
 	begin
@@ -85,9 +87,43 @@ program pasapalabras;
 //Metodos:
 	//Agregar un jugador:
 
-		procedure addPlayer();
+		function createPlayer():puntJugadores;
+			var newJugador : puntJugadores;
 		begin
+			new(newJugador);
+			write('Ingrese el Nombre del Jugador: '); readln(newJugador^.jugador.nombre);
+			newJugador^.jugador.partidasGanadas := 0;
+			newJugador^.jugadorMayor := Nil;
+			newJugador^.jugadorMenor:= Nil;
+			createPlayer := newJugador;
+		end;
 
+		function isExistsPlayer(var Jugadores : puntJugadores; newJugador : puntJugadores) : boolean;
+		begin
+				if (Jugadores = Nil) then begin
+					Jugadores := newJugador;
+					isExistsPlayer := false;
+				end else if (newJugador^.jugador.nombre = Jugadores^.jugador.nombre) then isExistsPlayer := true
+				else if newJugador^.jugador.nombre < Jugadores^.jugador.nombre then isExistsPlayer(Jugadores^.jugadorMenor,newJugador)
+				else isExistsPlayer(Jugadores^.jugadorMayor,newJugador)
+		end;
+
+		procedure addPlayer(var archJugador : archJugadores; var Jugadores : puntJugadores);
+			var newJugador : puntJugadores;
+			var respuesta : String;
+		begin
+			respuesta := 's';
+			while respuesta = 's'  do begin
+				newJugador := createPlayer();
+				if isExistsPlayer(Jugadores,newJugador) then begin
+					writeln('Ese Jugador ya existe por favor intentelo nuevamente');
+				end else begin
+					seek(archJugador, filesize(archJugador));
+					write(archJugador,newJugador^.jugador);
+					seek(archJugador,0);
+				end;
+				write('Quiere cargar otro jugador (s/n): '); readln(respuesta);
+			end;
 		end;
 
 	//Listar jugadores
@@ -103,25 +139,37 @@ program pasapalabras;
 		end;
 
 	//Salir:
-		procedure exitPlay(var Palabras : archPalabras; var Jugador : archJugador);
+		procedure exitPlay(var archPalabra : archPalabras; var archJugador : archJugadores);
 		begin
 			writeln('');
 			writeln('--------------------------------------------');
 			writeln('| Esta saliendo del juego vuelva pronto!!! |');
 			writeln('--------------------------------------------');
 			writeln('');
-			close(Palabras);
-			close(Jugador);
+			close(archPalabra);
+			close(archJugador);
 			HALT;
 		end;
 
-	procedure selectMode(var Palabras : archPalabras; var Jugador : archJugador);
-		var Mode : String;
-	begin
-		Mode :=  writeMenu();
+//variables:
+var archPalabra : archPalabras;
+var archJugador : archJugadores;
+var Jugadores : puntJugadores;
+var Mode : String;
+
+begin
+	jugadores := Nil;
+	if not isExists(archJugador,'ip2/Acrespo-Jugadores.dat') then rewrite(archJugador);
+	isExists(archPalabra,'ip2/palabras.dat','Error: lo sentimos, pero el archivo Palabras no se pudo abrir');
+
+	{
+		// esta seccion contiene el codigo que muestra el menu y elige que metodo quiere ejecutar;
+		// PD: esto no esta en un procedimiento debido a la cantidad de variables que tendria que haber pasado por parametro;
+	}
+	Mode :=  writeMenu();
 		while(Mode <> '4') do begin
 			Case Mode of
-				'1' : addPlayer();
+				'1' : addPlayer(archJugador,Jugadores);
 				'2' : listPayers();
 				'3' : play();
 				else begin
@@ -133,14 +181,6 @@ program pasapalabras;
 			end;
 			Mode := writeMenu();
 		end;
-		exitPlay(Palabras,Jugador);
-	end;
+		exitPlay(archPalabra,archJugador);
 
-//variables:
-var Palabras : archPalabras;
-var Jugador : archJugador;
-begin
-	if not isExists(Jugador,'ip2/Acrespo-Jugadores.dat') then rewrite(Jugador);
-	isExists(Palabras,'ip2/palabras.dat','Error: lo sentimos, pero el archivo Palabras no se pudo abrir');
-	selectMode(Palabras,Jugador);
 end.
