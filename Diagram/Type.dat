@@ -1,0 +1,49 @@
+//Declaraciones De Tipos y Constantes:
+	type
+		ST4=String[4];
+
+	//Jugadores:
+		typeJugador = record
+			nombre : string;
+			partidasGanadas : Integer;
+		end;
+
+		puntJugadores = ^typeArbol;
+			typeArbol = record
+				jugador : typeJugador;
+				jugadorMenor : puntJugadores;
+				jugadorMayor : puntJugadores;
+			end;
+
+		archJugadores = file of typeJugador;
+
+	//Palabras:
+		typePalabra = record
+			nroSet : Integer;
+			letra : String;
+			palabra : string;
+			consigna : string;
+		end;
+
+		archPalabras = file of typePalabra;
+
+	//Partida:
+
+		enumRespuesta = (Pendiente, Acertada, Errada);
+
+		//segun la profe esto no representa una lista circular
+		puntRosco = ^typeRosco;
+			typeRosco = record
+				letra : String;
+				palabra : String;
+				consigna : String;
+				respuesta : enumRespuesta;
+				sigConsigna : puntRosco;
+			end;
+
+		typePartida = record
+			nombreJugador : String;
+			rosco : puntRosco;
+		end;
+
+		arrayPartida = Array[1..2] of typePartida;
