@@ -1,4 +1,8 @@
-program pasapalabras;
+program pasapalabra;
+
+{
+    le dedico a usted profe la eliminacion de todos los type menos 1;
+}
 
 //Declaraciones De Tipos y Constantes:
 	type
@@ -74,51 +78,56 @@ program pasapalabras;
 		write('Selecciona una opcion: '); Readln(writeMenu);
 	end;
 
+	procedure writeArch(var archPalabra : archPalabras);
+		var palabra : typePalabra;
+	begin
+		while not eof(archPalabra) do begin
+			read(archPalabra, palabra);
+			writeln('El Numero es: ', palabra.nroSet);
+			writeln('La letra es: ', palabra.letra);
+			writeln('La Palabra es: ', palabra.palabra);
+			writeln('');
+		end;
+	end;
+
+	function isExistsPlayer(var Jugadores : puntJugadores; nombre : String) : Boolean;
+	begin
+		if (Jugadores = Nil) then isExistsPlayer := false
+		else if (nombre = Jugadores^.jugador.nombre) then isExistsPlayer := True
+		else if nombre < Jugadores^.jugador.nombre then isExistsPlayer := isExistsPlayer(Jugadores^.jugadorMenor,nombre)
+		else isExistsPlayer := isExistsPlayer(Jugadores^.jugadorMayor,nombre)
+	end;
+
+
 //Metodos:
 	//Agregar un jugador:
 
-		function createPlayer():puntJugadores;
-			var newJugador : puntJugadores;
+		procedure addPlayerTree(var Jugadores : puntJugadores; newJugador : typeJugador);
 		begin
-			new(newJugador);
-			write('Ingrese el Nombre del Jugador: '); readln(newJugador^.jugador.nombre);
-			newJugador^.jugador.partidasGanadas := 0;
-			newJugador^.jugadorMayor := Nil;
-			newJugador^.jugadorMenor:= Nil;
-			createPlayer := newJugador;
-		end;
-		function createPlayer(Jugador : typeJugador): puntJugadores;
-			var newJugador : puntJugadores;
-		begin
-			new(newJugador);
-			newJugador^.jugador := Jugador;
-			newJugador^.jugadorMayor := Nil;
-			newJugador^.jugadorMenor:= Nil;
-			createPlayer := newJugador;
+		  if (Jugadores = Nil) then begin
+			new(Jugadores);
+			Jugadores^.jugador := newJugador;
+			Jugadores^.jugadorMenor := Nil;
+			Jugadores^.jugadorMayor := Nil;
+		  end else if Jugadores^.jugador.nombre < newJugador.nombre then addPlayerTree(Jugadores^.jugadorMayor,newJugador)
+		  else if Jugadores^.jugador.nombre > newJugador.nombre then addPlayerTree(Jugadores^.jugadorMenor ,newJugador);
 		end;
 
-		function addPlayerTree(var Jugadores : puntJugadores; newJugador : puntJugadores) : boolean;
-		begin
-				if (Jugadores = Nil) then begin
-					Jugadores := newJugador;
-					addPlayerTree := false;
-				end else if (newJugador^.jugador.nombre = Jugadores^.jugador.nombre) then addPlayerTree := true
-				else if newJugador^.jugador.nombre < Jugadores^.jugador.nombre then addPlayerTree(Jugadores^.jugadorMenor,newJugador)
-				else addPlayerTree(Jugadores^.jugadorMayor,newJugador)
-		end;
 
 		procedure addPlayer(var archJugador : archJugadores; var Jugadores : puntJugadores);
-			var newJugador : puntJugadores;
+			var newJugador : typeJugador;
 			var respuesta : String;
 		begin
 			respuesta := 's';
 			while respuesta = 's'  do begin
-				newJugador := createPlayer();
-				if addPlayerTree(Jugadores,newJugador) then begin
+				write('Ingrese el Nombre del Jugador: '); readln(newJugador.nombre);
+				newJugador.partidasGanadas := 0;
+				if (isExistsPlayer(Jugadores,newJugador.nombre)) then begin
 					writeln('Ese Jugador ya existe por favor intentelo nuevamente');
 				end else begin
+					addPlayerTree(Jugadores,newJugador);
 					seek(archJugador, filesize(archJugador));
-					write(archJugador,newJugador^.jugador);
+					write(archJugador,newJugador);
 					seek(archJugador,0);
 				end;
 				write('Quiere cargar otro jugador (s/n): '); readln(respuesta);
@@ -126,15 +135,6 @@ program pasapalabras;
 		end;
 
 	//Listar jugadores
-
-		procedure fillTreePlayer(var archJugador : archJugadores; var Jugador : puntJugadores);
-			var newJugador : typeJugador;
-		begin
-			while not eof(archJugador) do begin
-				read(archJugador,newJugador);
-				addPlayerTree(Jugador,createPlayer(newJugador));
-			end;
-		end;
 
 		procedure listPayers(Jugador : puntJugadores);
 		begin
@@ -149,52 +149,23 @@ program pasapalabras;
 
 	//Jugar:
 
-		{function fillRoscoPlay(var archPalabra : archPalabras; indice : Integer) : puntRosco;
-			var palabra : typePalabra;
-			var rosco : puntRosco;
-			begin
-				new(puntRosco);
-				puntRosco := Nil;
-				fillRoscoPlay := puntRosco;
-				Read(archPalabra, palabra);
-			while (not eof(archPalabra)) and (indice <= palabra^.nroSet) do begin
-				puntRosco := palabra;
-				puntRosco := puntRosco^.sigConsigna
-				read(archPalabra,palabra);
-			end;
-		end;
-		}
 		procedure writeRosco(rosco : puntRosco);
+			var palabra : String;
 		begin
-		end;
-
-		function fillRoscoPlay(var archPalabra : archPalabras; var rosco : puntRosco; indice : Integer) : puntRosco;
-			var palabra : typePalabra;
-		begin
-			if (not eof(archPalabra)) then begin
-				read(archPalabra,palabra);
-				if indice <= palabra.nroSet then begin
-					rosco^.letra := palabra.letra;
-					rosco^.consigna := palabra.consigna;
-					rosco^.respuesta := Pendiente;
-					rosco^.sigConsigna := fillRoscoPlay(archPalabra,rosco^.sigConsigna,indice);
-				end else rosco := Nil;
-				fillRoscoPlay := rosco;
+			if rosco <> Nil then begin
+			  	palabra := rosco^.palabra;
+				write('la letra es: '); writeln(rosco^.letra);
+				rosco := rosco^.sigConsigna;
+				while rosco^.palabra <> palabra do begin
+					write('la letra es: '); writeln(rosco^.letra);
+					rosco := rosco^.sigConsigna;
+				end;
 			end;
-		end;
-
-		function isExistsPlayer(jugador : puntJugadores; nombre : String) : boolean;
-		begin
-			if jugador = Nil then isExistsPlayer := false
-			else if jugador^.jugador.nombre = nombre then isExistsPlayer := true
-			else if jugador^.jugador.nombre > nombre then isExistsPlayer := isExistsPlayer(jugador^.jugadorMenor,nombre)
-			else isExistsPlayer := isExistsPlayer(jugador^.jugadorMayor,nombre);
 		end;
 
 		function createPlayer(jugador : puntJugadores): typePartida;
 			var partida : typePartida;
 		begin
-			new(partida.rosco);
 			partida.rosco := Nil;
 			write('escribe el nombre se del jugador: '); readln(partida.nombreJugador);
 			while (not isExistsPlayer(jugador,partida.nombreJugador)) do begin
@@ -203,20 +174,51 @@ program pasapalabras;
 			createPlayer := partida;
 		end;
 
-		function fillArrayPlay(var archPalabra : archPalabras; jugador : puntJugadores) : arrayPartida;
-			var partida : arrayPartida;
+		function createNewRoscoNode(palabra : typePalabra): puntRosco;
+			var Rosco : puntRosco;
 		begin
-			partida[1] := createPlayer(jugador);
-			partida[1].rosco := fillRoscoPlay(archPalabra,partida[1].rosco,2);
-			partida[2] := createPlayer(jugador);
-			partida[2].rosco := fillRoscoPlay(archPalabra,partida[2].rosco,3);
-			fillArrayPlay := partida;
+			new(Rosco);
+			Rosco^.letra := palabra.letra;
+			Rosco^.palabra := palabra.palabra;
+			Rosco^.consigna := palabra.consigna;
+			Rosco^.respuesta := Pendiente;
+			Rosco^.sigConsigna := Rosco;
+			createNewRoscoNode := Rosco;
+		end;
+
+		procedure addRoscoPlay(var Rosco, newRosco : puntRosco);
+			var cursor : puntRosco;
+		begin
+			if (Rosco <> Nil) then begin
+				cursor := Rosco;
+				while (cursor^.sigConsigna^.palabra <> Rosco^.palabra) do cursor := cursor^.sigConsigna;
+				cursor^.sigConsigna := newRosco;
+				newRosco^.sigConsigna := Rosco;
+			end else Rosco := newRosco;
+		end;
+
+		procedure fillRoscoPlay(var archPalabra : archPalabras; var Rosco : puntRosco; indice : Integer);
+			var palabra : typePalabra;
+			var newRosco : puntRosco;
+		begin
+			Seek(archPalabra,0);
+			read(archPalabra,palabra);
+			while ((not eof(archPalabra)) and (palabra.nroSet <= indice)) do begin
+				if (palabra.nroSet = indice) then begin
+					newRosco := createNewRoscoNode(palabra);
+					addRoscoPlay(Rosco,newRosco);
+				end;
+				read(archPalabra,palabra);
+			end;
 		end;
 
 		procedure play(var archPalabra : archPalabras; var archJugador : archJugadores; var Jugadores : puntJugadores);
 			var partida : arrayPartida;
 		begin
-			partida := fillArrayPlay(archPalabra,Jugadores);
+			partida[1] := createPlayer(Jugadores);	
+			fillRoscoPlay(archPalabra, partida[1].rosco, 2);
+			partida[2] := createPlayer(Jugadores);
+			fillRoscoPlay(archPalabra, partida[2].rosco, 3);
 		end;
 
 	//Salir:
@@ -231,40 +233,48 @@ program pasapalabras;
 			close(archJugador);
 		end;
 
+		//Selector:
+
+		procedure fillTreePlayer(var archJugador : archJugadores; var Jugador : puntJugadores);
+			var newJugador : typeJugador;
+		begin
+			while not eof(archJugador) do begin	
+				read(archJugador,newJugador);
+				addPlayerTree(Jugador, newJugador);
+			end;
+		end;
+
+		procedure selectMode(var archPalabra : archPalabras; var archJugador : archJugadores; var Jugadores : puntJugadores);
+			var Mode : ST4;
+		begin
+			Mode :=  writeMenu();
+			while(Mode <> '4') do begin
+				Case Mode of
+					'1' : addPlayer(archJugador,Jugadores);
+					'2' : listPayers(Jugadores);
+					'3' : play(archPalabra,archJugador,Jugadores);
+					else begin
+						writeln('Esa Opcion no existe');
+						writeln('');
+						writeln('////////\\\\\\\\');
+						writeln('');
+					end;
+				end;
+				Mode := writeMenu();
+			end;
+			exitPlay(archPalabra,archJugador);
+		end;
+
 //variables:
 var archPalabra : archPalabras;
 var archJugador : archJugadores;
 var Jugadores : puntJugadores;
-var Mode : ST4;
 
 begin
 	jugadores := Nil;
-
 	if (not isExists(archJugador,'ip2/Acrespo-Jugadores.dat')) then rewrite(archJugador);
 	assign(archPalabra,'ip2/palabras.dat');
 	reset(archPalabra);
-
-	{
-		// esta seccion contiene el codigo que muestra el menu y elige que metodo quiere ejecutar;
-		// PD: esto no esta en un procedimiento debido a la cantidad de variables que tendria que haber pasado por parametro;
-	}
-
 	fillTreePlayer(archJugador,Jugadores);
-
-	Mode :=  writeMenu();
-		while(Mode <> '4') do begin
-			Case Mode of
-				'1' : addPlayer(archJugador,Jugadores);
-				'2' : listPayers(Jugadores);
-				'3' : play(archPalabra,archJugador,Jugadores);
-				else begin
-					writeln('Esa Opcion no existe');
-					writeln('');
-					writeln('////////\\\\\\\\');
-					writeln('');
-				end;
-			end;
-			Mode := writeMenu();
-		end;
-		exitPlay(archPalabra,archJugador);
+	selectMode(archPalabra,archJugador,Jugadores);
 end.
