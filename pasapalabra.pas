@@ -1,7 +1,7 @@
 program pasapalabra;
 
 {
-    le dedico a usted profe la eliminacion de todos los type menos 1;
+    // le dedico a usted profe la eliminacion de todos los type menos 1;
 }
 
 //Declaraciones De Tipos y Constantes:
@@ -90,7 +90,7 @@ program pasapalabra;
 		end;
 	end;
 
-	function isExistsPlayer(var Jugadores : puntJugadores; nombre : String) : Boolean;
+	function isExistsPlayer(Jugadores : puntJugadores; nombre : String) : Boolean;
 	begin
 		if (Jugadores = Nil) then isExistsPlayer := false
 		else if (nombre = Jugadores^.jugador.nombre) then isExistsPlayer := True
@@ -186,28 +186,24 @@ program pasapalabra;
 			createNewRoscoNode := Rosco;
 		end;
 
-		procedure addRoscoPlay(var Rosco, newRosco : puntRosco);
+		procedure addRoscoPlay(var Rosco : puntRosco; palabra : typePalabra);
 			var cursor : puntRosco;
 		begin
 			if (Rosco <> Nil) then begin
 				cursor := Rosco;
 				while (cursor^.sigConsigna^.palabra <> Rosco^.palabra) do cursor := cursor^.sigConsigna;
-				cursor^.sigConsigna := newRosco;
-				newRosco^.sigConsigna := Rosco;
-			end else Rosco := newRosco;
+				cursor^.sigConsigna := createNewRoscoNode(palabra);
+				cursor^.sigConsigna^.sigConsigna := Rosco;
+			end else Rosco := createNewRoscoNode(palabra);
 		end;
 
 		procedure fillRoscoPlay(var archPalabra : archPalabras; var Rosco : puntRosco; indice : Integer);
 			var palabra : typePalabra;
-			var newRosco : puntRosco;
 		begin
 			Seek(archPalabra,0);
 			read(archPalabra,palabra);
 			while ((not eof(archPalabra)) and (palabra.nroSet <= indice)) do begin
-				if (palabra.nroSet = indice) then begin
-					newRosco := createNewRoscoNode(palabra);
-					addRoscoPlay(Rosco,newRosco);
-				end;
+				if (palabra.nroSet = indice) then addRoscoPlay(Rosco,palabra);
 				read(archPalabra,palabra);
 			end;
 		end;
@@ -260,7 +256,11 @@ program pasapalabra;
 						writeln('');
 					end;
 				end;
-				Mode := writeMenu();
+
+				WriteLn('');
+				Write('Quiere usted continuar? (s/n): '); ReadLn(Mode);
+				if Mode = 's' then Mode := writeMenu() else Mode := '4'; 
+				
 			end;
 			exitPlay(archPalabra,archJugador);
 		end;
@@ -272,8 +272,8 @@ var Jugadores : puntJugadores;
 
 begin
 	jugadores := Nil;
-	if (not isExists(archJugador,'ip2/Acrespo-Jugadores.dat')) then rewrite(archJugador);
-	assign(archPalabra,'ip2/palabras.dat');
+	if (not isExists(archJugador,'./ip2/Acrespo-Jugadores.dat')) then rewrite(archJugador);
+	assign(archPalabra,'./ip2/palabras.dat');
 	reset(archPalabra);
 	fillTreePlayer(archJugador,Jugadores);
 	selectMode(archPalabra,archJugador,Jugadores);
