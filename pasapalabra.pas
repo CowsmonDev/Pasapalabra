@@ -37,7 +37,6 @@ program pasapalabra;
 
 		enumRespuesta = (Pendiente, Acertada, Errada);
 
-		//segun la profe esto no representa una lista circular
 		puntRosco = ^typeRosco;
 			typeRosco = record
 				letra : String;
@@ -56,6 +55,10 @@ program pasapalabra;
 
 //Metodos Generales:
 
+	{
+		si bien este nombre le parece raro a manuel este nombre lo puse haciendo referencia a un metodo que esta presente en java
+		por costumbre lo puse asi Y preferiria no cambiarlo... PD: si inciste en cambiarlo lo cambio
+	}
 	function isExists(var archJugador : archJugadores; Direccion : String): boolean;
 	begin
 		assign(archJugador,Direccion);
@@ -104,13 +107,13 @@ program pasapalabra;
 
 		procedure addPlayerTree(var Jugadores : puntJugadores; newJugador : typeJugador);
 		begin
-		  if (Jugadores = Nil) then begin
+			if (Jugadores = Nil) then begin
 			new(Jugadores);
 			Jugadores^.jugador := newJugador;
 			Jugadores^.jugadorMenor := Nil;
 			Jugadores^.jugadorMayor := Nil;
-		  end else if Jugadores^.jugador.nombre < newJugador.nombre then addPlayerTree(Jugadores^.jugadorMayor,newJugador)
-		  else if Jugadores^.jugador.nombre > newJugador.nombre then addPlayerTree(Jugadores^.jugadorMenor ,newJugador);
+			end else if Jugadores^.jugador.nombre < newJugador.nombre then addPlayerTree(Jugadores^.jugadorMayor,newJugador)
+			else if Jugadores^.jugador.nombre > newJugador.nombre then addPlayerTree(Jugadores^.jugadorMenor ,newJugador);
 		end;
 
 
@@ -139,11 +142,11 @@ program pasapalabra;
 		procedure listPayers(Jugador : puntJugadores);
 		begin
 			if (Jugador <> Nil) then begin
-				listPayers(Jugador^.jugadorMenor);
+				listPlayers(Jugador^.jugadorMenor);
 				writeln('// El Nombre del Jugador es: ', Jugador^.jugador.nombre);
 				writeln('// La cantidad de Partidas Ganadas del Jugador es: ', Jugador^.jugador.partidasGanadas);
 				writeln('');
-				listPayers(Jugador^.jugadorMayor);
+				listPlayers(Jugador^.jugadorMayor);
 			end;
 		end;
 
@@ -153,13 +156,11 @@ program pasapalabra;
 			var palabra : String;
 		begin
 			if rosco <> Nil then begin
-			  	palabra := rosco^.palabra;
-				write('la letra es: '); writeln(rosco^.letra);
-				rosco := rosco^.sigConsigna;
-				while rosco^.palabra <> palabra do begin
+				palabra := rosco^.palabra;
+				repeat
 					write('la letra es: '); writeln(rosco^.letra);
 					rosco := rosco^.sigConsigna;
-				end;
+				until rosco^.palabra <> palabra;
 			end;
 		end;
 
@@ -208,13 +209,78 @@ program pasapalabra;
 			end;
 		end;
 
+		function getQuestionPending(rosco : puntRosco): puntRosco;
+			var palabra : String;
+		begin
+			palabra := rosco^.palabra;
+			while ((rosco^.palabra <> palabra) and (rosco^.respuesta <> Pendiente)) do rosco := rosco^.sigConsigna;
+			if rosco^.respuesta = Pendiente then getQuestionPending := rosco else getQuestionPending := Nil;
+		end;
+
+		function getAnswer(pregunta : puntRosco) : String;
+		begin
+			writeln('La letra es: ', pregunta^.letra);
+			writeln('La letra es: ', pregunta^.consigna);
+			write('Ingrese su respuesta, (escribe "pp" para pasapalabra): ', getAnswer);
+		end;
+
+		procedure initGame(var partida : arrayPartida);
+			var numJugador : Integer;
+		begin
+			numJugador := 1;
+			partida[numJugador].rosco := getQuestionPending(partida[numJugador].rosco);
+			while ((partida[1].rosco <> Nil) and (partida[2].rosco <> Nil)) do begin
+				if partida[numJugador].rosco <> Nil then begin
+					respuesta := getAnswer(partida[numJugador].rosco);
+					if respuesta <> 'pp' then if numJugador = 1 then numJugador = 2 else numJugador = 1;
+					else if (partida[numJugador].rosco^.partida = respuesta) then partida[numJugador].rosco^.respuesta := Acertada
+					else begin
+						partida[numJugador].rosco^.respuesta := Errada;
+						if numJugador = 1 then numJugador = 2 else numJugador = 1;
+					end;
+					partida[numJugador].rosco := getQuestionPending(partida[numJugador].rosco);
+				end;
+			end;
+		end;
+
+
+		function getCorrectAmount(rosco : puntRosco): Integer;
+			var cantidadCorrectas : Integer;
+			var palabra : String;
+		begin
+			palabra := rosco^.palabra;
+			cantidadCorrectas := 0;
+			repeat
+				if rosco^.respuesta = Acertada then cantidadCorrectas := cantidadCorrectas + 1;
+				rosco := rosco^.sigConsigna;
+			until rosco^.palabra <> palabra;
+			getCorrectAmount := cantidadCorrectas;
+		end;
+
+		procedure finishGame(var archJugador : archJugadores; var Jugadores : puntJugadores; partida : arrayPartida);
+			var puntajeJugador1, puntajeJugador2 : Integer;
+		begin
+			puntajeJugador1 := getCorrectAmount(partida[1].rosco);
+			puntajeJugador2 := getCorrectAmount(partida[2].rosco);
+
+			if puntajeJugador1 = puntajeJugador2 then begin
+				//Empate
+			end else if puntajeJugador1 < puntajeJugador2 then begin
+				//gana jugador 1
+			end else begin
+				//gana jugador 2
+			end;
+		end;
+
+
 		procedure play(var archPalabra : archPalabras; var archJugador : archJugadores; var Jugadores : puntJugadores);
 			var partida : arrayPartida;
 		begin
-			partida[1] := createPlayer(Jugadores);	
+			partida[1] := createPlayer(Jugadores);
 			fillRoscoPlay(archPalabra, partida[1].rosco, 2);
 			partida[2] := createPlayer(Jugadores);
 			fillRoscoPlay(archPalabra, partida[2].rosco, 3);
+			initGame(partida);
 		end;
 
 	//Salir:
@@ -234,7 +300,7 @@ program pasapalabra;
 		procedure fillTreePlayer(var archJugador : archJugadores; var Jugador : puntJugadores);
 			var newJugador : typeJugador;
 		begin
-			while not eof(archJugador) do begin	
+			while not eof(archJugador) do begin
 				read(archJugador,newJugador);
 				addPlayerTree(Jugador, newJugador);
 			end;
@@ -243,24 +309,25 @@ program pasapalabra;
 		procedure selectMode(var archPalabra : archPalabras; var archJugador : archJugadores; var Jugadores : puntJugadores);
 			var Mode : ST4;
 		begin
-			Mode :=  writeMenu();
-			while(Mode <> '4') do begin
-				Case Mode of
-					'1' : addPlayer(archJugador,Jugadores);
-					'2' : listPayers(Jugadores);
-					'3' : play(archPalabra,archJugador,Jugadores);
-					else begin
-						writeln('Esa Opcion no existe');
-						writeln('');
-						writeln('////////\\\\\\\\');
-						writeln('');
+			Mode := 's';
+			while Mode = 's' do begin
+				Mode :=  writeMenu();
+				while(Mode <> '4') do begin
+					Case Mode of
+						'1' : addPlayer(archJugador,Jugadores);
+						'2' : listPlayers(Jugadores);
+						'3' : play(archPalabra,archJugador,Jugadores);
+						else begin
+							writeln('Esa Opcion no existe');
+							writeln('');
+							writeln('////////\\\\\\\\');
+							writeln('');
+							Mode := writeMenu();
+						end;
 					end;
 				end;
-
 				WriteLn('');
 				Write('Quiere usted continuar? (s/n): '); ReadLn(Mode);
-				if Mode = 's' then Mode := writeMenu() else Mode := '4'; 
-				
 			end;
 			exitPlay(archPalabra,archJugador);
 		end;

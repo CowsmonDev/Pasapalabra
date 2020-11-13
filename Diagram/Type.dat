@@ -31,7 +31,6 @@
 
 		enumRespuesta = (Pendiente, Acertada, Errada);
 
-		//segun la profe esto no representa una lista circular
 		puntRosco = ^typeRosco;
 			typeRosco = record
 				letra : String;
@@ -47,3 +46,4 @@
 		end;
 
 		arrayPartida = Array[1..2] of typePartida;
+
