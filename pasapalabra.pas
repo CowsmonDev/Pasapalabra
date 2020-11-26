@@ -1,11 +1,49 @@
 program pasapalabra;
 
 {
+	este programa simula al juego pasapalabra, este esta hecho para ejecutarse en consola
+	existiran dos jugadores, cada uno de ellos jugara por turnos, una vez que el jugador ingrese una respuesta
+	incorrecta o escriba pp en la consola se pasara el turno al oponente
+	"este juego no lleva interfaces amigables"
+}
+
+//{ Consideraciones:
+	{
+		// El tipo de dato en el menu de inicio es distinto de String[1], debido a que en el caso
+		// de que el usuario ingresara un valor mayor a 9 este tomaria solo el primer numero
+		// lo daria como valido en el menu y no le pediria que ingrese una valor nuevo por eleccion inexistente.
+		// por ejemplo si el usuario ingresara un 10 ese seria tomado como un 1, por lo que el usuario ingresaria a la opcion numero 1
+		// hago esta aclaracion porque durante la elaboracion del trabajo alguien me remarco este punto.
+	}
+	{
+		// se supone que el archivo de palabras existe y esta completamente cargado
+		// con indices que van del 1 al 5
+		// no se verifica que los datos en el esten ingresados correctamente
+	}
+	{
+		// el resto de String en el programa no fueron cambiados por string acotados ya que esto podria entrar
+		// en conflicto con algun dato en los archivos
+	}
+	{
+		// el codigo esta ordenado por modulos establecidos en el menu, de estas secciones de codigo contienen los submodulos que utiliza el modulo general de la seccion
+	}
+	{
+		// en el caso de que ambos jugadores tengan la misma cantidad de respuestas correctas, no se le asignara
+		// a ninguno de los dos un puntaje
+	}
+	{
+		// ambos jugadores tienen la posibilidad de jugar la misma cantidad de turnos. aunque el primer jugador haya terminado sus palabras, el juego continuara con el segundo
+		// hasta la finalizacion su turno... una vez finalizado este, el juego termina.
+	}
+//}
+
+{
     // le dedico a usted profe la eliminacion de todos los type menos 1; 
 }
 
 //Declaraciones De Tipos y Constantes:
 	type
+		ST1=String[1];
 		ST4=String[4];
 
 	//Jugadores:
@@ -26,7 +64,7 @@ program pasapalabra;
 	//Palabras:
 		typePalabra = record
 			nroSet : Integer;
-			letra : String;
+			letra : char;
 			palabra : string;
 			consigna : string;
 		end;
@@ -39,7 +77,7 @@ program pasapalabra;
 
 		puntRosco = ^typeRosco;
 			typeRosco = record
-				letra : String;  // STRING[1]
+				letra : ST1;
 				palabra : String;
 				consigna : String;
 				respuesta : enumRespuesta;
@@ -55,12 +93,6 @@ program pasapalabra;
 
 //Metodos Generales:
 
-	{
-		si bien este nombre le parece raro a manuel este nombre lo puse haciendo referencia a un metodo que esta presente en java
-		por costumbre lo puse asi Y preferiria no cambiarlo... PD: si inciste en cambiarlo lo cambio
-	}
-	// COINCIDO CON MANUEL EN QUE RESULTA CONFUSA TU FORMA DE NOMBRAR MODULOS, TENES QUE APUNTAR A QUE TUS CODIGOS SEAN ENTENDIBLES EN PASCAL 
-	// (SIN NECESIDAD QUE QUIEN LOS LEA SEA EXPERTO EN JAVA) YM
 	
 	function existeArchivo(var archJugador : typeArchJugadores; Direccion : String): boolean; 
 	begin
@@ -70,8 +102,6 @@ program pasapalabra;
 		{$I+}
 		existeArchivo := (IOResult = 0);
 	end;
-
-
 
 	procedure escribirArchivo(var archPalabra : typeArchPalabras);
 		var palabraActual : typePalabra; 
@@ -100,7 +130,7 @@ program pasapalabra;
 		procedure agregarJugadorArbol(var arbolJugadores : puntJugadores; nuevoNombre : String);
 		begin
 			if (arbolJugadores = Nil) then begin
-				new(arbolJugadores);                 // NEW(JUGADORES) SINTAXIS MUY SIMILAR A NEWJUGADOR. CONFUNDE. YM 
+				new(arbolJugadores);
 				arbolJugadores^.jugador.nombre := nuevoNombre;
 				arbolJugadores^.jugador.partidasGanadas := 0;
 				arbolJugadores^.jugadorMenor := Nil;
@@ -112,7 +142,7 @@ program pasapalabra;
 
 		procedure agregarJugador(var archJugador : typeArchJugadores; var arbolJugadores : puntJugadores);
 			var nuevoJugador : typeJugador;
-			var respuesta : String; // STRING[1] YM
+			var respuesta : ST1;
 		begin
 			respuesta := 's';
 			nuevoJugador.partidasGanadas := 0;
@@ -183,7 +213,7 @@ program pasapalabra;
 		begin
 			Seek(archPalabra,0);
 			palabra.nroSet := 0;
-			while ((not eof(archPalabra)) and (palabra.nroSet <= indice)) do begin  // READ( ARCHPALABRA, PALABRA)  YM
+			while ((not eof(archPalabra)) and (palabra.nroSet <= indice)) do begin
 			    read(archPalabra,palabra);
 				if (palabra.nroSet = indice) then agregarNuevoRosco(Rosco,palabra);
 			end;
@@ -192,12 +222,12 @@ program pasapalabra;
 		function existePreguntaPendiente(var rosco : puntRosco): Boolean;
 			var palabra : String;
 		begin
+		    write(rosco^.palabra);
 			palabra := rosco^.palabra;
 			if rosco^.respuesta = Pendiente then existePreguntaPendiente := true 
 			else begin
-				repeat
-				rosco := rosco^.sigConsigna;
-				until ((rosco^.palabra <> palabra) or (rosco^.respuesta <> Pendiente));
+			    rosco := rosco^.sigConsigna;
+			    while ((rosco^.palabra <> palabra) and (rosco^.respuesta <> Pendiente)) do rosco := rosco^.sigConsigna;
 				existePreguntaPendiente := (rosco^.respuesta = Pendiente);
 			end;
 		end;
@@ -211,18 +241,26 @@ program pasapalabra;
 			obtenerRespuesta:= respuesta;
 		end;
 
-		procedure initGame(var partida : typeArrayPartida);
+		procedure iniciarJuego(var partida : typeArrayPartida);
 			var numJugador : Integer;
 			var respuesta : String;
 		begin
 			numJugador := 1;
 			while (existePreguntaPendiente(partida[numJugador].rosco)) do begin
 				respuesta := obtenerRespuesta(partida[numJugador].rosco);
-				if respuesta = 'pp' then begin if numJugador = 1 then numJugador := 2 else numJugador := 1;
-				end else if partida[numJugador].rosco^.palabra = respuesta then partida[numJugador].rosco^.respuesta := Acertada
-				else begin
+				if respuesta = 'pp' then begin
+				    if numJugador = 1 then numJugador := 2 else numJugador := 1;
+				end else if (partida[numJugador].rosco^.palabra = respuesta) then begin
+					partida[numJugador].rosco^.respuesta := Acertada;
+					WriteLn('');
+					WriteLn('--- Respuesta Acertada ---');
+					WriteLn('');
+				end else begin
 					partida[numJugador].rosco^.respuesta := Errada;
 					if numJugador = 1 then numJugador := 2 else numJugador := 1;
+					WriteLn('');
+					WriteLn('--- Respuesta Erronea ---');
+					WriteLn('');
 				end;
 			end;
 		end;
@@ -267,12 +305,17 @@ program pasapalabra;
 			if puntajeJugador1 > puntajeJugador2 then begin
 				modificarPuntajeArbol(arbolJugadores, partida[1].nombreJugador);
 				modificarPuntajeArchivo(archJugador, partida[1].nombreJugador);
+				WriteLn('------------------------------');
+				WriteLn('| El ganador es el Jugador 1 |');
+				WriteLn('------------------------------');
 			end else if puntajeJugador1 < puntajeJugador2 then begin
 				modificarPuntajeArbol(arbolJugadores, partida[2].nombreJugador);
 				modificarPuntajeArchivo(archJugador, partida[2].nombreJugador);
+				WriteLn('------------------------------');
+				WriteLn('| El ganador es el Jugador 2 |');
+				WriteLn('------------------------------');
 			end;
 		end;
-
 
 		procedure jugar(var archPalabra : typeArchPalabras; var archJugador : typeArchJugadores; arbolJugadores : puntJugadores);
 			var partida : typeArrayPartida;
@@ -281,12 +324,18 @@ program pasapalabra;
 			partida[1] := crearJugador(arbolJugadores);
 			llenarRoscoPartida(archPalabra, partida[1].rosco, Random(5)+1);
 			partida[2] := crearJugador(arbolJugadores);
+			while (partida[2].nombreJugador = partida[1].nombreJugador) do begin
+				WriteLn('Debes ingresar dos jugadores distintos: ');
+				WriteLn('');
+				partida[2] := crearJugador(arbolJugadores);
+			end;
 			llenarRoscoPartida(archPalabra, partida[2].rosco, Random(5)+1);
-			initGame(partida);
+			iniciarJuego(partida);
 			terminarJuego(archJugador,arbolJugadores,partida);
 		end;
 
 	//Salir:
+
 		procedure salirJuego(var archPalabra : typeArchPalabras; var archJugador : typeArchJugadores);
 		begin
 			writeln('');
@@ -310,7 +359,7 @@ program pasapalabra;
 		end;
 
 		function escribirMenu(): ST4;  // CON STRING[1] ALCANZA... 
-		//respondiendo a la correccion: ya habia comentado que utilice cuatro en string debido a que si me ingresaba un numero de dos cifraz me tomaba el primero, por lo que el 10 seria enrealidad 1
+		//respondiendo a la correccion: ya habia comentado que utilice cuatro en string debido a que si me ingresaba un numero de dos cifraz me tomaba el primero, por lo que el 10 seria en realidad 1
 		begin
 			writeln('----------------');
 			writeln('| PASAPALABRAS |');
@@ -326,25 +375,22 @@ program pasapalabra;
 		procedure seleccionarModo(var archPalabra : typeArchPalabras; var archJugador : typeArchJugadores; var arbolJugadores : puntJugadores);
 			var Mode : ST4;
 		begin
-			Mode := 's';
-			while Mode = 's' do begin
-				Mode :=  escribirMenu();
-				while(Mode <> '4') do begin
-					Case Mode of
-						'1' : agregarJugador(archJugador,arbolJugadores);
-						'2' : listarJugadores(arbolJugadores);
-						'3' : jugar(archPalabra,archJugador,arbolJugadores);
-						else begin
-							writeln('Esa Opcion no existe');
-							writeln('');
-							writeln('////////\\\\\\\\');
-							writeln('');
-							Mode := escribirMenu();
-						end;
+			Mode :=  escribirMenu();
+			while(Mode <> '4') do begin
+				Case Mode of
+					'1' : agregarJugador(archJugador,arbolJugadores);
+					'2' : listarJugadores(arbolJugadores);
+					'3' : jugar(archPalabra,archJugador,arbolJugadores);
+					else begin
+						writeln('Esa Opcion no existe');
+						writeln('');
+						writeln('////////\\\\\\\\');
+						writeln('');
+						Mode := escribirMenu();
 					end;
-					WriteLn('');
-					Write('Quiere usted continuar? (s/n): '); ReadLn(Mode);
 				end;
+				WriteLn('');
+				Mode :=  escribirMenu();  
 			end;
 			salirJuego(archPalabra,archJugador);
 		end;
@@ -356,8 +402,8 @@ var arbolJugadores : puntJugadores;
 
 begin
 	arbolJugadores := Nil;
-	if (not existeArchivo(archJugador,'./ip2/Acrespo-Jugadores.dat')) then rewrite(archJugador);
-	assign(archPalabra,'./ip2/palabras.dat');
+	if (not existeArchivo(archJugador,'/ip2/Acrespo-Jugadores.dat')) then rewrite(archJugador);
+	assign(archPalabra,'/ip2/palabras.dat');
 	reset(archPalabra);
 	llenarArbolJugador(archJugador,arbolJugadores);
 	seleccionarModo(archPalabra,archJugador,arbolJugadores);
