@@ -1,4 +1,4 @@
-program pasapalabra;
+program pasapalabra; // @CowsmonDev 22 - 23
 
 {
 	este programa simula al juego pasapalabra, este esta hecho para ejecutarse en consola
@@ -127,7 +127,7 @@ program pasapalabra;
 //Metodos:
 	//Agregar un jugador:
 
-		procedure agregarJugadorArbol(var arbolJugadores : puntJugadores; nuevoNombre : String);
+		procedure agregarJugadorArbol(var arbolJugadores : puntJugadores; nuevoNombre : String); //Inserta un nuevo jugador al archivo
 		begin
 			if (arbolJugadores = Nil) then begin
 				new(arbolJugadores);
@@ -139,8 +139,7 @@ program pasapalabra;
 			else if arbolJugadores^.jugador.nombre > nuevoNombre then agregarJugadorArbol(arbolJugadores^.jugadorMenor ,nuevoNombre);
 		end;
 
-
-		procedure agregarJugador(var archJugador : typeArchJugadores; var arbolJugadores : puntJugadores);
+		procedure agregarJugador(var archJugador : typeArchJugadores; var arbolJugadores : puntJugadores); //Agrega un jugador nueal arbol y al archivo
 			var nuevoJugador : typeJugador;
 			var respuesta : ST1;
 		begin
@@ -161,7 +160,7 @@ program pasapalabra;
 
 	//Listar jugadores
 
-		procedure listarJugadores(var arbolJugadores : puntJugadores);
+		procedure listarJugadores(var arbolJugadores : puntJugadores); //Lista los jugadores de forma IN-ORDER
 		begin
 			if (arbolJugadores <> Nil) then begin
 				listarJugadores(arbolJugadores^.jugadorMenor);
@@ -174,7 +173,7 @@ program pasapalabra;
 
 	//Jugar:
 
-		function crearJugador(arbolJugadores : puntJugadores): typePartida;
+		function crearJugador(arbolJugadores : puntJugadores): typePartida; //pide el nombre del jugador e devuelve un elemento nuevo para el arreglo
 			var partida : typePartida;
 		begin
 			partida.rosco := Nil;
@@ -185,7 +184,7 @@ program pasapalabra;
 			crearJugador := partida;
 		end;
 
-		function crearNuevoRosco(nuevaPalabra : typePalabra): puntRosco;
+		function crearNuevoRosco(nuevaPalabra : typePalabra): puntRosco; //crea un nuevo nodo para el rosco, este mismo es circular
 			var Rosco : puntRosco;
 		begin
 			new(Rosco);
@@ -197,7 +196,7 @@ program pasapalabra;
 			crearNuevoRosco := Rosco;
 		end;
 
-		procedure agregarNuevoRosco(var Rosco : puntRosco; palabra : typePalabra);
+		procedure agregarNuevoRosco(var Rosco : puntRosco; palabra : typePalabra); //Inserta el nuevo nodo al rosco y lo mantiene constantemente como una lista circular
 			var cursor : puntRosco;
 		begin
 			if (Rosco <> Nil) then begin
@@ -208,7 +207,7 @@ program pasapalabra;
 			end else Rosco := crearNuevoRosco(palabra);
 		end;
 
-		procedure llenarRoscoPartida(var archPalabra : typeArchPalabras; var Rosco : puntRosco; indice : Integer);
+		procedure llenarRoscoPartida(var archPalabra : typeArchPalabras; var Rosco : puntRosco; indice : Integer); //llena el rosco con los valores del archivo
 			var palabra : typePalabra;
 		begin
 			Seek(archPalabra,0);
@@ -219,7 +218,7 @@ program pasapalabra;
 			end;
 		end;
 
-		function existePreguntaPendiente(var rosco : puntRosco): Boolean;
+		function existePreguntaPendiente(var rosco : puntRosco): Boolean; //devuelve un valor booleano ante la existencia de pregunta pendiente y posiciona el rosco en ese elemento
 			var palabra : String;
 		begin
 		    write(rosco^.palabra);
@@ -232,7 +231,7 @@ program pasapalabra;
 			end;
 		end;
 
-		function obtenerRespuesta(pregunta : puntRosco) : String;
+		function obtenerRespuesta(pregunta : puntRosco) : String; //muestra la consigna y devuelve su respuesta
 			var respuesta : String;
 		begin
 			writeln('La Letra es: ', pregunta^.letra);
@@ -241,7 +240,7 @@ program pasapalabra;
 			obtenerRespuesta:= respuesta;
 		end;
 
-		procedure iniciarJuego(var partida : typeArrayPartida);
+		procedure iniciarJuego(var partida : typeArrayPartida); //modulo en el cual inicia el juego
 			var numJugador : Integer;
 			var respuesta : String;
 		begin
@@ -265,7 +264,7 @@ program pasapalabra;
 			end;
 		end;
 
-		function obtenerCantidadCorrectas(rosco : puntRosco): Integer;
+		function obtenerCantidadCorrectas(rosco : puntRosco): Integer; //Obtiene la cantidad de respuestas correctas del rosco
 			var cantidadCorrectas : Integer;
 			var palabraInicial: String;
 		begin
@@ -278,14 +277,14 @@ program pasapalabra;
 			obtenerCantidadCorrectas := cantidadCorrectas;
 		end;
 
-		procedure modificarPuntajeArbol(arbolJugadores : puntJugadores; nombre : String);
+		procedure modificarPuntajeArbol(arbolJugadores : puntJugadores; nombre : String); //Modifica el puntaje del ganador en el arbol
 		begin
 			if arbolJugadores^.jugador.nombre = nombre then arbolJugadores^.jugador.partidasGanadas := arbolJugadores^.jugador.partidasGanadas + 1
 			else if arbolJugadores^.jugador.nombre < nombre then modificarPuntajeArbol(arbolJugadores^.jugadorMayor ,nombre)
 			else if arbolJugadores^.jugador.nombre > nombre then modificarPuntajeArbol(arbolJugadores^.jugadorMenor ,nombre);
 		end;
 
-		procedure modificarPuntajeArchivo(var archJugador : typeArchJugadores; nombre : String);
+		procedure modificarPuntajeArchivo(var archJugador : typeArchJugadores; nombre : String); //Modifica el puntaje del ganador en el archivo
 			var jugador : typeJugador;
 		begin
 			Seek(archJugador,0);
@@ -296,7 +295,7 @@ program pasapalabra;
 			Seek(archJugador,0);
 		end;
 
-		procedure terminarJuego(var archJugador : typeArchJugadores; var arbolJugadores : puntJugadores; partida : typeArrayPartida);
+		procedure terminarJuego(var archJugador : typeArchJugadores; var arbolJugadores : puntJugadores; partida : typeArrayPartida); //contiene las intrucciones para la verificacion del ganador y asignacion de puntaje
 			var puntajeJugador1, puntajeJugador2 : Integer;
 		begin
 			puntajeJugador1 := obtenerCantidadCorrectas(partida[1].rosco);
@@ -317,7 +316,7 @@ program pasapalabra;
 			end;
 		end;
 
-		procedure jugar(var archPalabra : typeArchPalabras; var archJugador : typeArchJugadores; arbolJugadores : puntJugadores);
+		procedure jugar(var archPalabra : typeArchPalabras; var archJugador : typeArchJugadores; arbolJugadores : puntJugadores); //Modulo central en el que redistribuye se redistribuye hacia los modulos
 			var partida : typeArrayPartida;
 		begin
 			Randomize;
@@ -336,7 +335,7 @@ program pasapalabra;
 
 	//Salir:
 
-		procedure salirJuego(var archPalabra : typeArchPalabras; var archJugador : typeArchJugadores);
+		procedure salirJuego(var archPalabra : typeArchPalabras; var archJugador : typeArchJugadores); //Cierra los archivos y muestra un mensaje de salida
 		begin
 			writeln('');
 			writeln('--------------------------------------------');
@@ -349,7 +348,7 @@ program pasapalabra;
 
 		//Selector:
 
-		procedure llenarArbolJugador(var archJugador : typeArchJugadores; var arbolJugador : puntJugadores);
+		procedure llenarArbolJugador(var archJugador : typeArchJugadores; var arbolJugador : puntJugadores); //Llena el arbol con los jugadores que el archivo de jugadores
 			var newJugador : typeJugador;
 		begin
 			while not eof(archJugador) do begin
@@ -360,6 +359,7 @@ program pasapalabra;
 
 		function escribirMenu(): ST4;  // CON STRING[1] ALCANZA... 
 		//respondiendo a la correccion: ya habia comentado que utilice cuatro en string debido a que si me ingresaba un numero de dos cifraz me tomaba el primero, por lo que el 10 seria en realidad 1
+		//escribe el menu y espera la devolucion de una opcion
 		begin
 			writeln('----------------');
 			writeln('| PASAPALABRAS |');
@@ -372,7 +372,7 @@ program pasapalabra;
 			write('Selecciona una opcion: '); Readln(escribirMenu);
 		end;
 
-		procedure seleccionarModo(var archPalabra : typeArchPalabras; var archJugador : typeArchJugadores; var arbolJugadores : puntJugadores);
+		procedure seleccionarModo(var archPalabra : typeArchPalabras; var archJugador : typeArchJugadores; var arbolJugadores : puntJugadores); //Dependiendo la opcion ingresada por el usuario redirecciona hacia los modulos
 			var Mode : ST4;
 		begin
 			Mode :=  escribirMenu();
